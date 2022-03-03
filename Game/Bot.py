@@ -85,7 +85,11 @@ async def hello_world(ctx: commands.Context):
     await editMessage()
 
 
-bot.run('OTQ4MzMyMjA3NzQ1OTQ1NjUy.Yh6RMQ.HhIALlt2JRc8-3ki7q7BEH3M__Q')
+with open("TOKEN.txt", "r") as f:
+    TOKEN = f.readline()
+    f.close()
+
+bot.run(TOKEN)
 
 # https://www.wordleunlimited.com/
 # https://www.freecodecamp.org/news/create-a-discord-bot-with-python/
