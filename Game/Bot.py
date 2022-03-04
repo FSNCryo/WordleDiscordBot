@@ -4,15 +4,12 @@ import numpy as np
 
 bot = commands.Bot(command_prefix='!')
 
-letters = {0: ":black_large_square:", 1: ":regional_indicator_a:", 2: ":regional_indicator_b:",
-           3: ":regional_indicator_c:", 4: ":regional_indicator_d:", 5: ":regional_indicator_e:",
-           6: ":regional_indicator_f:", 7: ":regional_indicator_g:", 8: ":regional_indicator_h:",
-           9: ":regional_indicator_i:", 10: ":regional_indicator_j:", 11: ":regional_indicator_k:",
-           12: ":regional_indicator_l:", 13: ":regional_indicator_m:", 14: ":regional_indicator_n:",
-           15: ":regional_indicator_o:", 16: ":regional_indicator_p:", 17: ":regional_indicator_q:",
-           18: ":regional_indicator_r:", 19: ":regional_indicator_s:", 20: ":regional_indicator_t:",
-           21: ":regional_indicator_u:", 22: ":regional_indicator_v:", 23: ":regional_indicator_w:",
-           24: ":regional_indicator_x:", 25: ":regional_indicator_y:", 26: ":regional_indicator_z:"}
+global started
+global square
+square = 0
+letters = {0: ":black_large_square:", 1: "🇦", 2: "🇧", 3: "🇨", 4: "🇩", 5: "🇪", 6: "🇫", 7: "🇬", 8: "🇭",
+           9: "🇮", 10: "🇯", 11: "🇰", 12: "🇱", 13: "🇲", 14: "🇳", 15: "🇴", 16: "🇵", 17: "🇶",
+           18: "🇷", 19: "🇸", 20: "🇹", 21: "🇺", 22: "🇻", 23: "🇼", 24: "🇽", 25: "🇾", 26: "🇿"}
 
 Grid = np.array([
     [0, 0, 0, 0, 0],
@@ -61,12 +58,37 @@ async def sendMessage(message):
     global msg
     embedVar = getNormalEmbededData(title="Wordle", description="{}".format(getGameGrid()))
     msg = await message.channel.send(embed=embedVar)
+    for letter in letters:
+        if letter != 0:
+            await msg.add_reaction(letters[letter])
 
 
-async def editMessage():
+async def updateMessage():
     global msg
     embedVar = getNormalEmbededData(title="Wordle", description="{}".format(getGameGrid()))
     await msg.edit(embed=embedVar)
+
+@bot.event
+async def on_reaction_add(reaction, user):
+    global square
+    letter = reaction.emoji
+
+    if user.bot:
+        return
+
+    for row in range(0, len(Grid)):
+        if Grid[row, square] == 0:
+            Grid[row, square] = list(letters.keys())[list(letters.values()).index(letter)]
+            print("row: " + str(Grid[row]))
+            print("grid: " + str(len(Grid)))
+
+            print("square: " + str(square))
+            await updateMessage()
+            square += 1
+            return
+        square += 1
+        if row == Grid[row, -1]:
+            return
 
 
 @bot.event
@@ -76,13 +98,15 @@ async def on_ready():
 
 @bot.command(name="start")
 async def hello_world(ctx: commands.Context):
+    global started
+    started = True
     await sendMessage(ctx)
 
 
-@bot.command(name="test")
-async def hello_world(ctx: commands.Context):
+@bot.command(name="reset")
+async def hello(ctx: commands.Context):
     reset()
-    await editMessage()
+    await updateMessage()
 
 
 with open("TOKEN.txt", "r") as f:
@@ -98,4 +122,5 @@ bot.run(TOKEN)
 
 # create 'embed' grid like snake
 # useful links
+# https://faun.pub/creating-discord-game-bot-using-discord-api-and-python-free-hosting-in-cloud-e127206fafb5
 # https://github.com/Terra-rian/snakecord/blob/main/index.js
