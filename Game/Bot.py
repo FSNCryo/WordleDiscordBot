@@ -218,7 +218,7 @@ async def hello(ctx: commands.Context):
     await updateMessage()
 
 
-with open("TOKEN.txt", "r") as f:
+with open("../TOKEN/TOKEN.env", "r") as f:
     TOKEN = f.readline()
     f.close()
 
