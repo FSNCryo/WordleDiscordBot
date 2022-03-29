@@ -12,7 +12,7 @@ import random
 global word
 global started
 global index
-letters = {0: ":black_large_square:", 1: "🇦", 2: "🇧", 3: "🇨", 4: "🇩", 5: "🇪", 6: "🇫", 7: "🇬", 8: "🇭",
+letters = {0: ":white_square_button:", 1: "🇦", 2: "🇧", 3: "🇨", 4: "🇩", 5: "🇪", 6: "🇫", 7: "🇬", 8: "🇭",
            9: "🇮", 10: "🇯", 11: "🇰", 12: "🇱", 13: "🇲", 14: "🇳", 15: "🇴", 16: "🇵", 17: "🇶",
            18: "🇷", 19: "🇸", 20: "🇹", 21: "🇺", 22: "🇻", 23: "🇼", 24: "🇽", 25: "🇾", 26: "🇿",
            27: ":black_large_square:", 28: ":green_square:", 29: ":yellow_square:"}
@@ -120,40 +120,45 @@ async def on_reaction_add(reaction, user):
         #  don't ask me or try to understand why this works... It just does.
 
     if emoji == "➡":
-        if len(Grid) - 1 < index + 1:
+        if len(Grid) < index + 1:
             return
         if 0 in Grid[index]:
             return
-        index += 1
+
         wordArr = []
         for L in word:
             wordArr.append(L)
-
-        temp = np.where(Grid[index - 1] == 0)
+        letterIndexArr = []
+        for i in wordArr:
+            letterIndexArr.append(alphabet.index(i) + 1)
+        temp = np.where(Grid[index] != 27)
         squares = temp[0]
-        lettersByIndex = list(letters)
 
-        squareRep = 0
-        for nextSquare in squares:
-            letterRep = 0
-            for letter in wordArr:
-                print(nextSquare)
-                if nextSquare < 27 and nextSquare != 0:
-                    if letter == alphabet[nextSquare]:
-                        if letterRep == squareRep:
-                            print(letter+" green")
-                            Grid[index - 1, squareRep - 1] = 28
-                            Grid[index - 1, squareRep + 1] = 28
+        print("squares: ", squares)
+        for i in range(5):
+            print("i: ", i)
+            squareIndex = squares[i]
 
-                        else:
-                            print(letter+" yellow")
-                            Grid[index - 1, squareRep - 1] = 29
-                            Grid[index - 1, squareRep + 1] = 29
+            letterIndex = letterIndexArr[i]
+            squareGrid = Grid[index, squareIndex]
+            letter = alphabet[squareGrid - 1]
 
-                letterRep += 1
-            squareRep += 1
+            if squareGrid == letterIndex:
+                Grid[index, squareIndex - 1] = 28
+                Grid[index, squareIndex + 1] = 28
+                wordArr.pop(0)
 
-            # if letter correct letter pos -1 and +1 == green etc
+            elif letter in wordArr:
+                Grid[index, squareIndex - 1] = 29
+                Grid[index, squareIndex + 1] = 29
+                # NOTE: get the square value add one and get the letter from alphabet index
+
+
+
+        # last line
+        index += 1
+    # 28 = green, 29 = yellow
+    # if letter correct letter pos -1 and +1 == green etc
     await updateMessage()
     return
 
@@ -161,7 +166,10 @@ async def on_reaction_add(reaction, user):
 @bot.event
 async def on_ready():
     print('We have logged in as {0.user}'.format(bot))
-
+    print("TODO: in on message check if it is the user who started the game")
+    print("TODO: put the wordle game in a separate file, this will allow for multiple games to be played at once")
+    print("TODO: add a way to end the game")
+    print("TODO: delete users guess after they send it")
 
 @bot.event
 async def on_message(message):
@@ -206,7 +214,7 @@ async def hello_world(ctx: commands.Context):
     global word
     reset()
     word = getWord()
-    await ctx.send("The word is: " + word)
+    # await ctx.send("The word is: " + word)
     global started
     started = True
     await sendMessage(ctx)
