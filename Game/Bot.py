@@ -6,6 +6,10 @@ import numpy as np
 import json
 
 bot = commands.Bot(command_prefix='!')
+intents = discord.Intents.default()
+intents.dm_reactions = True
+intents.reactions = True
+bot.command(intents=intents)
 
 import random
 
@@ -20,6 +24,8 @@ letters = {0: ":white_square_button:", 1: "🇦", 2: "🇧", 3: "🇨", 4: "🇩
 alphabet = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u',
             'v', 'w', 'x', 'y', 'z']
 global lettersLocationIndex
+global lettersDeleted
+lettersDeleted = ""
 lettersLocationIndex = 0
 lettersLocation = {}
 
@@ -55,6 +61,9 @@ def reset():
         [27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27]
     ])
 
+def resetRow(i):
+    global Grid
+    Grid[i] = [27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27]
 
 def getGameGrid():
     str = ""
@@ -89,6 +98,7 @@ async def updateMessage():
     embedVar = getNormalEmbededData(title="Wordle", description="{}".format(getGameGrid()))
     embedVar.add_field(name="Backspace = :arrow_backward:", value="\u200b", inline=True)
     embedVar.add_field(name="Enter Word = :arrow_right:", value="\u200b", inline=True)
+    embedVar.add_field(name="Clear Row = :arrows_counterclockwise:", value="\u200b", inline=False)
     embedVar.add_field(name="Line: "+str(index+1), value="\u200b", inline=False)
     await msg.edit(embed=embedVar)
 
@@ -96,16 +106,19 @@ async def updateMessage():
 
     await msg.add_reaction('◀')
     await msg.add_reaction('➡')
+    await msg.add_reaction('🔄')
 
 
 # on reaction remove
 @bot.event
 async def on_reaction_add(reaction, user):
-    global index, lettersLocationIndex
+    # print("reaction added")
+    global index, lettersLocationIndex, lettersDeleted
     emoji = reaction.emoji
+    channel = reaction.message.channel
     if user == bot.user:
         return
-    await msg.remove_reaction(reaction, user)
+
     if emoji == "◀":
         tempList = list(lettersLocation)
         letter = lettersLocation[tempList[-1]]
@@ -117,7 +130,38 @@ async def on_reaction_add(reaction, user):
         squares = temp[0]
         nextSquare = squares[-1]
         Grid[index, nextSquare] = 0
-        #  don't ask me or try to understand why this works... It just does.
+
+        messages = await channel.history(limit=5).flatten()
+        # check if the letter deleted is in messages, if so delete it
+        letterChar = alphabet[letterNum-1]
+        lettersDeleted = letterChar+lettersDeleted
+        for message in messages:
+            print("letters: " + lettersDeleted)
+            print("message: " + message.content)
+            if message.content == lettersDeleted:
+                await message.delete()
+                lettersDeleted = ""
+                break
+
+    if emoji == "🔄":
+        messages = await channel.history(limit=5).flatten()
+        lettersList = list(lettersLocation)
+
+        guess = ""
+        for message in messages:
+            letterNum = lettersLocation[lettersList[0]]
+            letter = alphabet[letterNum[1] - 1]
+            guess += letter
+            print(message.content)
+            if message.content == guess:
+                await message.delete()
+
+            lettersList.pop(0)
+
+
+
+
+        resetRow(index)
 
     if emoji == "➡":
         if len(Grid) < index + 1:
@@ -153,23 +197,25 @@ async def on_reaction_add(reaction, user):
                 Grid[index, squareIndex + 1] = 29
                 # NOTE: get the square value add one and get the letter from alphabet index
 
-
-
         # last line
         index += 1
     # 28 = green, 29 = yellow
     # if letter correct letter pos -1 and +1 == green etc
+    await msg.remove_reaction(reaction, user)
     await updateMessage()
     return
 
 
 @bot.event
 async def on_ready():
+    user = await bot.fetch_user(303249482651402261)
+    await user.send("I'm online!")
+    await bot.change_presence(activity=discord.Game(name="Wordle"))
     print('We have logged in as {0.user}'.format(bot))
     print("TODO: in on message check if it is the user who started the game")
+    print("TODO: game doesn't work in DM (onReactionAdd not running in DM) (check intents)")
     print("TODO: put the wordle game in a separate file, this will allow for multiple games to be played at once")
     print("TODO: add a way to end the game")
-    print("TODO: delete users guess after they send it")
 
 @bot.event
 async def on_message(message):
@@ -203,10 +249,11 @@ async def on_message(message):
                         Grid[index, nextSquare] = lettersByIndex[letter]  # add letters to grid
                         lettersLocation[lettersLocationIndex] = (index, Grid[index, nextSquare])  # save letters location (row and the letter)
                         lettersLocationIndex += 1
-                        await updateMessage()
 
                         squares = np.delete(squares, 0)
                         continue
+
+    await updateMessage()
 
 
 @bot.command(name="start")
@@ -226,18 +273,8 @@ async def hello(ctx: commands.Context):
     await updateMessage()
 
 
-with open("../TOKEN/TOKEN.env", "r") as f:
+with open("TOKEN.txt", "r") as f:
     TOKEN = f.readline()
     f.close()
 
 bot.run(TOKEN)
-
-# https://www.wordleunlimited.com/
-# https://www.freecodecamp.org/news/create-a-discord-bot-with-python/
-# https://tutorial.vcokltfre.dev/tutorial/04-pong/
-
-
-# create 'embed' grid like snake
-# useful links
-# https://faun.pub/creating-discord-game-bot-using-discord-api-and-python-free-hosting-in-cloud-e127206fafb5
-# https://github.com/Terra-rian/snakecord/blob/main/index.js
