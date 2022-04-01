@@ -285,7 +285,7 @@ async def on_ready():
     print("TODO: add daily Wordles")
     print("TODO: delete users guess when on reaction add is reset and when guess is split into multiple messages")
     print("TODO: add dropdown menu because why not... (https://gist.github.com/lykn/a2b68cb790d6dad8ecff75b2aa450f23)")
-
+    print("BUG: Words with the same letter twice and the first appearance of that letter is guessed correctly appears yellow instead of green. (Likely because I have no unique way of differentiating the two letters from each other)
 @bot.event
 async def on_message(message):
     global lettersLocationIndex, index, lettersLocation
