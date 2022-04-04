@@ -71,7 +71,7 @@ Grid = np.array([[27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27],
 
 
 def getWord():
-    with open("words.json", "r") as words_file:
+    with open("commonWords.json", "r") as words_file:
         data = json.loads(words_file.read())
 
         words = data[0]["5"]
@@ -120,6 +120,10 @@ def getWinEmbededData(title, description):
                          description=description,
                          color=discord.Color.green())
 
+def getLoseEmbededData(title, description):
+    return discord.Embed(title=title,
+                         description=description,
+                         color=discord.Color.red())
 
 async def sendMessage(message):
     global msg
@@ -149,7 +153,7 @@ async def win():
 
 async def lose():
     global msg, started
-    embedVar = getWinEmbededData(title="Wordle",
+    embedVar = getLoseEmbededData(title="Wordle",
                                  description="{}".format(getGameGrid()))
     embedVar.add_field(name="YOU LOSE!", value="\u200b", inline=True)
     embedVar.add_field(name="The Word Was: ",
@@ -225,6 +229,7 @@ async def on_reaction_add(reaction, user):
         contents = [message.content for message in messages]
         for message in messages:
             for i in range(loopNum):
+                print(lettersList[0])
                 letterNum = lettersLocation[lettersList[0]]
                 letter = alphabet[letterNum[1] - 1]
                 guess += letter
@@ -399,7 +404,6 @@ async def hello_world(ctx: commands.Context):
 async def hello(ctx: commands.Context):
     reset()
     await updateMessage()
-
 
 with open("TOKEN.txt", "r") as f:
     TOKEN = f.readline()
