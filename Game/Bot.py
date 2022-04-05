@@ -82,27 +82,26 @@ def getWord():
 
 
 def reset(userid):
+    list(players[userid])[0] = np.array([[27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27],
+                                         [27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27],
+                                         [27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27],
+                                         [27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27],
+                                         [27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27],
+                                         [27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27]])
+    list(players[userid])[1] = 0
 
-    players[userid][1] = 0
 
-    players[userid][0] = np.array([[27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27],
-                                   [27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27],
-                                   [27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27],
-                                   [27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27],
-                                   [27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27],
-                                   [27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27]])
 
 
 def resetRow(user, i):
     userid = user.author.id
-    players[userid][0][i] = [30, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 31]
-
+    list(players[userid])[0][i] = [30, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 31]
 
 
 def getGameGrid(message):
     str = ""
     authid = message.author.id
-    grid = players[authid]
+    grid = players[authid][0]
     for row in grid:
         for square in row:
             letter = letters.get(square)
@@ -124,19 +123,24 @@ def getWinEmbededData(title, description):
                          description=description,
                          color=discord.Color.green())
 
+
 def getLoseEmbededData(title, description):
     return discord.Embed(title=title,
                          description=description,
                          color=discord.Color.red())
 
+
 async def sendMessage(message):
     global msg
+
+    # get avatar url
+    avatar_url = message.author.avatar_url
     embedVar = getNormalEmbededData(title="Wordle",
                                     description="{}".format(getGameGrid(message)))
     embedVar.add_field(name="To Start enter a Word or Letter", value="\u200b")
-    embedVar.footer(text=message.author, icon_url=message.author.avatar_url)
-    msg = await message.channel.send(embed=embedVar)
 
+    embedVar.set_footer(text="{}".format(message.author.name), icon_url=avatar_url)
+    msg = await message.channel.send(embed=embedVar)
 
 
 async def win(user):
@@ -160,7 +164,7 @@ async def win(user):
 async def lose(user):
     global msg, started
     embedVar = getLoseEmbededData(title="Wordle",
-                                 description="{}".format(getGameGrid(user)))
+                                  description="{}".format(getGameGrid(user)))
     embedVar.add_field(name="YOU LOSE!", value="\u200b", inline=True)
     embedVar.add_field(name="The Word Was: ",
                        value="||" + word + "||",
@@ -177,10 +181,10 @@ async def updateMessage(user):
     global msg, started
     if started:
         embedVar = getNormalEmbededData(title="Wordle",
-                                        description="{}".format(getGameGrid()))
+                                        description="{}".format(getGameGrid(user)))
         embedVar.add_field(name="```Backspace = ◀\n"
-                           "Clear : 🔄\n"
-                           "Enter : ➡```",
+                                "Clear : 🔄\n"
+                                "Enter : ➡```",
                            value="\u200b",
                            inline=False)
 
@@ -289,14 +293,13 @@ async def on_reaction_add(reaction, user):
                 Grid[index, squareIndex - 1] = 28
                 Grid[index, squareIndex + 1] = 28
                 wordArr[wordArr.index(alphabet[letterIndex - 1])] = "*"
-        
-            
+
         for i in range(5):
             squareIndex = squares[i]
 
             squareGrid = Grid[index, squareIndex]
             letter = alphabet[squareGrid - 1]
-            
+
             if letter in wordArr:
                 Grid[index, squareIndex - 1] = 29
                 Grid[index, squareIndex + 1] = 29
@@ -361,8 +364,11 @@ async def on_message(message):
     if message.content[0] == "!":
         await bot.process_commands(message)
         return
+    player = players[message.author.id]
+    grid = player[0]
+    index = player[1]
     lettersLocation = {}
-    temp = np.where(Grid[index] == 0)
+    temp = np.where(grid[index] == 0)
     squares = temp[0]
 
     if len(squares) != 0:
@@ -371,7 +377,7 @@ async def on_message(message):
         for i in message.content.lower():
             msgArr.append(i)
 
-        temp = np.where(Grid[index] == 0)
+        temp = np.where(grid[index] == 0)
         squares = temp[0]
         lettersByIndex = list(letters)
 
@@ -380,10 +386,10 @@ async def on_message(message):
                 if len(squares) != 0 and letter != 0 and letter < 27:
                     nextSquare = squares[0]
                     if alphabet[letter - 1] == char:
-                        Grid[index, nextSquare] = lettersByIndex[
+                        grid[index, nextSquare] = lettersByIndex[
                             letter]  # add letters to grid
                         lettersLocation[lettersLocationIndex] = (
-                            index, Grid[index, nextSquare]
+                            index, grid[index, nextSquare]
                         )  # save letters location (row and the letter)
                         lettersLocationIndex += 1
 
@@ -391,8 +397,8 @@ async def on_message(message):
                         continue
 
     if index == 0:
-        Grid[index, 0] = 30
-        Grid[index, -1] = 31
+        grid[index, 0] = 30
+        grid[index, -1] = 31
     await updateMessage(message.author)
 
 
@@ -403,8 +409,7 @@ async def hello_world(ctx: commands.Context):
     word = getWord()
     # await ctx.send("The word is: " + word)
     print("The word is: " + word)
-    players[ctx.author.id][0] = Grid
-    players[ctx.author.id][1] = 0
+    players[ctx.author.id] = Grid, 0
 
     reset(ctx.author.id)
 
@@ -416,6 +421,7 @@ async def hello_world(ctx: commands.Context):
 async def hello(ctx: commands.Context):
     reset(ctx.author.id)
     await updateMessage(ctx.author)
+
 
 with open("TOKEN.txt", "r") as f:
     TOKEN = f.readline()
