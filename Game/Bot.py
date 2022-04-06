@@ -147,7 +147,10 @@ async def sendMessage(message):
     embedVar.set_footer(text="{}".format(message.author.name), icon_url=avatar_url)
     msg = await message.channel.send(embed=embedVar)
 
-    list(players[message.author.id])[2] = msg
+    print(list(players[message.author.id])[2])
+    players[message.author.id] = Grid, 0, msg.id, True
+
+    print(list(players[message.author.id])[2])
 
     reset(message.author.id)
 
@@ -170,6 +173,9 @@ async def win(channelid, user):
     await message.remove_reaction('🔄', bot.user)
     await message.remove_reaction('➡', bot.user)
 
+    players[user.id] = Grid, 0, None, False
+    del players[user.id]
+
 
 async def lose(channelid, user):
     embedVar = getLoseEmbededData(title="Wordle",
@@ -186,27 +192,28 @@ async def lose(channelid, user):
     await message.remove_reaction('◀', bot.user)
     await message.remove_reaction('🔄', bot.user)
     await message.remove_reaction('➡', bot.user)
-    players[user.id][3] = False
 
+    players[user.id] = Grid, 0, None, False
+    del players[user.id]
 
-async def updateMessage(channelid, userid, username, useravatar):
-
-    if players[userid][3]:
+async def updateMessage(channel_id, user_id, user_name, user_avatar):
+    print(players[user_id])
+    if list(players[user_id])[3]:
         embedVar = getNormalEmbededData(title="Wordle",
-                                        description="{}".format(getGameGrid(userid)))
+                                        description="{}".format(getGameGrid(user_id)))
         embedVar.add_field(name="```Backspace = ◀\n"
                                 "Clear : 🔄\n"
                                 "Enter : ➡```",
                            value="\u200b",
                            inline=False)
 
-        embedVar.add_field(name="Line: " + str(list(players[userid])[1] + 1),
+        embedVar.add_field(name="Line: " + str(list(players[user_id])[1] + 1),
                            value="\u200b",
                            inline=False)
 
-        embedVar.set_footer(text="{}".format(username), icon_url=useravatar)
+        embedVar.set_footer(text="{}".format(user_name), icon_url=user_avatar)
 
-        message = await bot.get_channel(channelid).fetch_message(players[userid][2])
+        message = await bot.get_channel(channel_id).fetch_message(players[user_id][2])
         await message.edit(embed=embedVar)
 
         await message.add_reaction('◀')
@@ -218,18 +225,18 @@ async def updateMessage(channelid, userid, username, useravatar):
 async def on_reaction_add(reaction, user):
     global lettersLocationIndex, lettersDeleted, lettersLocation
 
-    msg = players[user.id][2]
+    if user == bot.user:
+        return
 
     emoji = reaction.emoji
 
     channel = reaction.message.channel
 
-    if user == bot.user:
-        return
+    msg = players[user.id][2]
 
     index = list(players[user.id])[1]
 
-    await msg.remove_reaction(reaction, user)
+    await reaction.remove(user)
 
     if emoji == "◀":
         tempList = list(lettersLocation)
@@ -335,12 +342,12 @@ async def on_reaction_add(reaction, user):
 
         if guessedWord == word:
             print("correct")
-            await win(channel, user)
+            await win(channel.id, user)
         elif index >= 5:
-            await lose(channel, user)
+            await lose(channel.id, user)
 
         index += 1
-        players[user.id] = (players[user.id][0], players[user.id][1] + 1)
+        players[user.id] = (players[user.id][0], players[user.id][1] + 1, players[user.id][2], players[user.id][3])
         print("index: " + str(list(players[user.id])[1]))
 
         players[user.id][0][index, 0] = 30
@@ -348,7 +355,7 @@ async def on_reaction_add(reaction, user):
     # if guess != word and index = len(Grid) - 1: then end game.
     # await msg.remove_reaction(reaction, user)
 
-    await updateMessage(message.channel.id, user.id, user.display_name, user.avatar_url)
+    await updateMessage(channel.id, user.id, user.display_name, user.avatar_url)
     return
 
 
@@ -432,7 +439,7 @@ async def on_message(message):
         grid[index, 0] = 30
         grid[index, -1] = 31
 
-    await updateMessage(message.channel.id , message.author.id, message.author.display_name, message.author.avatar_url)
+    await updateMessage(message.channel.id, message.author.id, message.author.display_name, message.author.avatar_url)
 
 
 @bot.command(name="start")
@@ -445,6 +452,9 @@ async def hello_world(ctx: commands.Context):
 
     await sendMessage(ctx)
 
+@bot.command(name="myemail")
+async def email(ctx, member : discord.Member = None):
+    await ctx.send("Your profile is: " + str(ctx.author.profile).replace(" ", "\n"))
 
 @bot.command(name="reset")
 async def hello(ctx: commands.Context):
