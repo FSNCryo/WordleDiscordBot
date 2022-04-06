@@ -15,35 +15,34 @@ bot.command(intents=intents)
 import random
 
 global word
-global started
 letters = {
     0: ":white_square_button:",
-    1: "🇦",
-    2: "🇧",
-    3: "🇨",
-    4: "🇩",
-    5: "🇪",
-    6: "🇫",
-    7: "🇬",
-    8: "🇭",
-    9: "🇮",
-    10: "🇯",
-    11: "🇰",
-    12: "🇱",
-    13: "🇲",
-    14: "🇳",
-    15: "🇴",
-    16: "🇵",
-    17: "🇶",
-    18: "🇷",
-    19: "🇸",
-    20: "🇹",
-    21: "🇺",
-    22: "🇻",
-    23: "🇼",
-    24: "🇽",
-    25: "🇾",
-    26: "🇿",
+    1: ":regional_indicator_a:",
+    2: ":regional_indicator_b:",
+    3: ":regional_indicator_c:",
+    4: ":regional_indicator_d:",
+    5: ":regional_indicator_e:",
+    6: ":regional_indicator_f:",
+    7: ":regional_indicator_g:",
+    8: ":regional_indicator_h:",
+    9: ":regional_indicator_i:",
+    10: ":regional_indicator_j:",
+    11: ":regional_indicator_k:",
+    12: ":regional_indicator_l:",
+    13: ":regional_indicator_m:",
+    14: ":regional_indicator_n:",
+    15: ":regional_indicator_o:",
+    16: ":regional_indicator_p:",
+    17: ":regional_indicator_q:",
+    18: ":regional_indicator_r:",
+    19: ":regional_indicator_s:",
+    20: ":regional_indicator_t:",
+    21: ":regional_indicator_u:",
+    22: ":regional_indicator_v:",
+    23: ":regional_indicator_w:",
+    24: ":regional_indicator_x:",
+    25: ":regional_indicator_y:",
+    26: ":regional_indicator_z:",
     27: ":black_large_square:",
     28: ":green_square:",
     29: ":yellow_square:",
@@ -138,8 +137,7 @@ def getLoseEmbededData(title, description):
 
 
 async def sendMessage(message):
-    global msg
-
+    players[message.author.id] = Grid, 0, 0, True
     avatar_url = message.author.avatar_url
     authid = message.author.id
     embedVar = getNormalEmbededData(title="Wordle",
@@ -149,44 +147,51 @@ async def sendMessage(message):
     embedVar.set_footer(text="{}".format(message.author.name), icon_url=avatar_url)
     msg = await message.channel.send(embed=embedVar)
 
+    list(players[message.author.id])[2] = msg
 
-async def win(user):
-    global msg, started
+    reset(message.author.id)
+
+
+async def win(channelid, user):
     embedVar = getWinEmbededData(title="Wordle",
-                                 description="{}".format(getGameGrid(user.author.id)))
+                                 description="{}".format(getGameGrid(user.id)))
     embedVar.add_field(name="YOU WIN!", value="\u200b", inline=True)
     embedVar.add_field(name="The Word Was: ||" + word + "||",
                        value="\u200b",
                        inline=True)
     embedVar.add_field(name="Completed in : ", value="\u200b", inline=False)
-    embedVar.add_field(name=str(list(players[user.author.id])[1]+1), value="\u200b", inline=False)
-    await msg.edit(embed=embedVar)
+    embedVar.add_field(name=str(list(players[user.id])[1] + 1), value="\u200b", inline=False)
 
-    await msg.remove_reaction('◀', bot.user)
-    await msg.remove_reaction('🔄', bot.user)
-    await msg.remove_reaction('➡', bot.user)
-    started = False
+    message = await bot.get_channel(channelid).fetch_message(players[user.id][2])
+
+    await message.edit(embed=embedVar)
+
+    await message.remove_reaction('◀', bot.user)
+    await message.remove_reaction('🔄', bot.user)
+    await message.remove_reaction('➡', bot.user)
 
 
-async def lose(user):
-    global msg, started
+async def lose(channelid, user):
     embedVar = getLoseEmbededData(title="Wordle",
-                                  description="{}".format(getGameGrid(user.author.id)))
+                                  description="{}".format(getGameGrid(user.id)))
     embedVar.add_field(name="YOU LOSE!", value="\u200b", inline=True)
     embedVar.add_field(name="The Word Was: ",
                        value="||" + word + "||",
                        inline=True)
-    await msg.edit(embed=embedVar)
 
-    await msg.remove_reaction('◀', bot.user)
-    await msg.remove_reaction('🔄', bot.user)
-    await msg.remove_reaction('➡', bot.user)
-    started = False
+    message = await bot.get_channel(channelid).fetch_message(players[user.id][2])
+
+    await message.edit(embed=embedVar)
+
+    await message.remove_reaction('◀', bot.user)
+    await message.remove_reaction('🔄', bot.user)
+    await message.remove_reaction('➡', bot.user)
+    players[user.id][3] = False
 
 
-async def updateMessage(userid, username, useravatar):
-    global msg, started
-    if started:
+async def updateMessage(channelid, userid, username, useravatar):
+
+    if players[userid][3]:
         embedVar = getNormalEmbededData(title="Wordle",
                                         description="{}".format(getGameGrid(userid)))
         embedVar.add_field(name="```Backspace = ◀\n"
@@ -195,24 +200,29 @@ async def updateMessage(userid, username, useravatar):
                            value="\u200b",
                            inline=False)
 
-        embedVar.add_field(name="Line: " + str(list(players[userid])[1]+1),
+        embedVar.add_field(name="Line: " + str(list(players[userid])[1] + 1),
                            value="\u200b",
                            inline=False)
 
         embedVar.set_footer(text="{}".format(username), icon_url=useravatar)
-        await msg.edit(embed=embedVar)
 
-        await msg.add_reaction('◀')
-        await msg.add_reaction('🔄')
-        await msg.add_reaction('➡')
+        message = await bot.get_channel(channelid).fetch_message(players[userid][2])
+        await message.edit(embed=embedVar)
+
+        await message.add_reaction('◀')
+        await message.add_reaction('🔄')
+        await message.add_reaction('➡')
 
 
 @bot.event
 async def on_reaction_add(reaction, user):
     global lettersLocationIndex, lettersDeleted, lettersLocation
-    emoji = reaction.emoji
-    channel = reaction.message.channel
 
+    msg = players[user.id][2]
+
+    emoji = reaction.emoji
+
+    channel = reaction.message.channel
 
     if user == bot.user:
         return
@@ -281,8 +291,8 @@ async def on_reaction_add(reaction, user):
         if 0 in players[user.id][0][index]:
             return
 
-        list(players[user.id])[0][index, 0] = 27
-        list(players[user.id])[0][index, -1] = 27
+        players[user.id][0][index, 0] = 27
+        players[user.id][0][index, -1] = 27
 
         wordArr = []
         for L in word:
@@ -301,8 +311,8 @@ async def on_reaction_add(reaction, user):
             squareGrid = players[user.id][0][index, squareIndex]
 
             if squareGrid == letterIndex:
-                list(players[user.id])[0][index, squareIndex - 1] = 28
-                list(players[user.id])[0][index, squareIndex + 1] = 28
+                players[user.id][0][index, squareIndex - 1] = 28
+                players[user.id][0][index, squareIndex + 1] = 28
                 wordArr[wordArr.index(alphabet[letterIndex - 1])] = "*"
 
         for i in range(5):
@@ -312,8 +322,8 @@ async def on_reaction_add(reaction, user):
             letter = alphabet[squareGrid - 1]
 
             if letter in wordArr:
-                list(players[user.id])[0][index, squareIndex - 1] = 29
-                list(players[user.id])[0][index, squareIndex + 1] = 29
+                players[user.id][0][index, squareIndex - 1] = 29
+                players[user.id][0][index, squareIndex + 1] = 29
 
             # NOTE: get the square value add one and get the letter from alphabet index
 
@@ -325,18 +335,20 @@ async def on_reaction_add(reaction, user):
 
         if guessedWord == word:
             print("correct")
-            await win(user)
+            await win(channel, user)
         elif index >= 5:
-            await lose(user)
+            await lose(channel, user)
 
-        list(players[user.id])[1] = index + 1
-        print(list(players[user.id])[1])
-        list(players[user.id])[0][index, 0] = 30
-        list(players[user.id])[0][index, -1] = 31
+        index += 1
+        players[user.id] = (players[user.id][0], players[user.id][1] + 1)
+        print("index: " + str(list(players[user.id])[1]))
+
+        players[user.id][0][index, 0] = 30
+        players[user.id][0][index, -1] = 31
     # if guess != word and index = len(Grid) - 1: then end game.
     # await msg.remove_reaction(reaction, user)
 
-    await updateMessage(user.id, user.display_name, user.avatar_url)
+    await updateMessage(message.channel.id, user.id, user.display_name, user.avatar_url)
     return
 
 
@@ -377,6 +389,13 @@ async def on_message(message):
     if message.content[0] == "!":
         await bot.process_commands(message)
         return
+
+    if message.author.id not in players:
+        print(players)
+
+        print("user " + str(message.author.id) + " has not started a game")
+        return
+
     player = players[message.author.id]
     grid = player[0]
     index = player[1]
@@ -412,7 +431,8 @@ async def on_message(message):
     if index == 0:
         grid[index, 0] = 30
         grid[index, -1] = 31
-    await updateMessage(message.author.id, message.author.display_name, message.author.avatar_url)
+
+    await updateMessage(message.channel.id , message.author.id, message.author.display_name, message.author.avatar_url)
 
 
 @bot.command(name="start")
@@ -422,18 +442,14 @@ async def hello_world(ctx: commands.Context):
     word = getWord()
     # await ctx.send("The word is: " + word)
     print("The word is: " + word)
-    players[ctx.author.id] = Grid, 0
 
-    reset(ctx.author.id)
-
-    started = True
     await sendMessage(ctx)
 
 
 @bot.command(name="reset")
 async def hello(ctx: commands.Context):
     reset(ctx.author.id)
-    await updateMessage(ctx.author.id, ctx.author.display_name, ctx.author.avatar_url)
+    await updateMessage(ctx.channel.id, ctx.author.id, ctx.author.display_name, ctx.author.avatar_url)
 
 
 with open("TOKEN.txt", "r") as f:
