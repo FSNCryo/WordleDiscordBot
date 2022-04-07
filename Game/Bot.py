@@ -14,7 +14,6 @@ bot.command(intents=intents)
 
 import random
 
-global word
 letters = {
     0: ":white_square_button:",
     1: ":regional_indicator_a:",
@@ -137,7 +136,7 @@ def getLoseEmbededData(title, description):
 
 
 async def sendMessage(message):
-    players[message.author.id] = Grid, 0, 0, True
+    players[message.author.id] = Grid, 0, 0, True, getWord()
     avatar_url = message.author.avatar_url
     authid = message.author.id
     embedVar = getNormalEmbededData(title="Wordle",
@@ -147,10 +146,7 @@ async def sendMessage(message):
     embedVar.set_footer(text="{}".format(message.author.name), icon_url=avatar_url)
     msg = await message.channel.send(embed=embedVar)
 
-    print(list(players[message.author.id])[2])
-    players[message.author.id] = Grid, 0, msg.id, True
-
-    print(list(players[message.author.id])[2])
+    players[message.author.id] = players[message.author.id][0], 0, msg.id, players[message.author.id][3], players[message.author.id][4]
 
     reset(message.author.id)
 
@@ -159,11 +155,11 @@ async def win(channelid, user):
     embedVar = getWinEmbededData(title="Wordle",
                                  description="{}".format(getGameGrid(user.id)))
     embedVar.add_field(name="YOU WIN!", value="\u200b", inline=True)
-    embedVar.add_field(name="The Word Was: ||" + word + "||",
+    embedVar.add_field(name="The Word Was: ||" + players[user.id][4] + "||",
                        value="\u200b",
                        inline=True)
-    embedVar.add_field(name="Completed in : ", value="\u200b", inline=False)
-    embedVar.add_field(name=str(list(players[user.id])[1] + 1), value="\u200b", inline=False)
+
+    embedVar.add_field(name="Completed in : "+str(list(players[user.id])[1] + 1), value="\u200b", inline=False)
 
     message = await bot.get_channel(channelid).fetch_message(players[user.id][2])
 
@@ -181,8 +177,9 @@ async def lose(channelid, user):
     embedVar = getLoseEmbededData(title="Wordle",
                                   description="{}".format(getGameGrid(user.id)))
     embedVar.add_field(name="YOU LOSE!", value="\u200b", inline=True)
-    embedVar.add_field(name="The Word Was: ",
-                       value="||" + word + "||",
+
+    embedVar.add_field(name="The Word Was: ||" + players[user.id][4] + "||",
+                       value="\u200b",
                        inline=True)
 
     message = await bot.get_channel(channelid).fetch_message(players[user.id][2])
@@ -197,7 +194,6 @@ async def lose(channelid, user):
     del players[user.id]
 
 async def updateMessage(channel_id, user_id, user_name, user_avatar):
-    print(players[user_id])
     if list(players[user_id])[3]:
         embedVar = getNormalEmbededData(title="Wordle",
                                         description="{}".format(getGameGrid(user_id)))
@@ -236,6 +232,8 @@ async def on_reaction_add(reaction, user):
 
     index = list(players[user.id])[1]
 
+    word = players[user.id][4]
+
     await reaction.remove(user)
 
     if emoji == "◀":
@@ -250,23 +248,25 @@ async def on_reaction_add(reaction, user):
         nextSquare = squares[-1]
         list(players[user.id])[0][index, nextSquare] = 0
 
-        messages = await channel.history(limit=5).flatten()
+        messages = [message for message in await channel.history(limit=50).flatten() if message.author.id == user.id]
+        messages = messages[:10]  # only look at the first 10 messages
         # check if the letter deleted is in messages, if so delete it
         letterChar = alphabet[letterNum - 1]
         lettersDeleted = letterChar + lettersDeleted
         for message in messages:
-
+            print(message.content)
             if message.content == lettersDeleted:
                 await message.delete()
                 lettersDeleted = ""
                 break
 
     if emoji == "🔄":
-        messages = await channel.history(limit=5).flatten()
+        messages = [message for message in await channel.history(limit=50).flatten() if message.author.id == user.id]
+
         guess = ""
         lettersList = list(lettersLocation)
         loopNum = len(lettersList)
-        contents = [message.content for message in messages]
+
         for message in messages:
             for i in range(loopNum):
                 print(lettersList[0])
@@ -279,13 +279,12 @@ async def on_reaction_add(reaction, user):
                 print("\n")
                 if message.content == guess:
                     await message.delete()
-                    contents.remove(message.content)
+                    message.delete()
                     if len(guess) == len(word):
                         return
 
                     guess = ""
                     lettersList = list(lettersLocation)
-                    # guess += letter
 
                 lettersList.pop(0)
 
@@ -341,14 +340,14 @@ async def on_reaction_add(reaction, user):
             guessedWord += alphabet[lettersLocation[L][1] - 1]
 
         if guessedWord == word:
-            print("correct")
             await win(channel.id, user)
+            return
         elif index >= 5:
             await lose(channel.id, user)
+            return
 
         index += 1
-        players[user.id] = (players[user.id][0], players[user.id][1] + 1, players[user.id][2], players[user.id][3])
-        print("index: " + str(list(players[user.id])[1]))
+        players[user.id] = (players[user.id][0], players[user.id][1] + 1, players[user.id][2], players[user.id][3], players[user.id][4])
 
         players[user.id][0][index, 0] = 30
         players[user.id][0][index, -1] = 31
@@ -367,23 +366,14 @@ async def on_ready():
     print('We have logged in as {0.user}'.format(bot))
     print("TODO: in on message check if it is the user who started the game")
     print(
-        "TODO: display username and pfp of the user that started each game making it easier to differentiate "
-        "between games")
-    print(
-        "TODO: game doesn't work in DM (onReactionAdd not running in DM) (check intents)"
-    )
-    print(
-        "TODO: put the wordle game in a separate file, this will allow for multiple games to be played at once"
-    )
+        "TODO: display username and pfp of the user that started each game making it easier to differentiate between games")
+    print("TODO: game doesn't work in DM (onReactionAdd not running in DM) (check intents)")
+    print("TODO: put the wordle game in a separate file, this will allow for multiple games to be played at once")
     print("TODO: check if the word entered is a word in words json")
     print("TODO: add date to win and lose messages")
     print("TODO: add daily Wordles")
-    print(
-        "TODO: delete users guess when on reaction add is reset and when guess is split into multiple messages"
-    )
-    print(
-        "TODO: add dropdown menu because why not... (https://gist.github.com/lykn/a2b68cb790d6dad8ecff75b2aa450f23)"
-    )
+    print("TODO: delete users guess when on reaction add is reset and when guess is split into multiple messages")
+    print("TODO: add dropdown menu because why not... (https://gist.github.com/lykn/a2b68cb790d6dad8ecff75b2aa450f23)")
 
 
 @bot.event
@@ -398,8 +388,6 @@ async def on_message(message):
         return
 
     if message.author.id not in players:
-        print(players)
-
         print("user " + str(message.author.id) + " has not started a game")
         return
 
@@ -444,17 +432,20 @@ async def on_message(message):
 
 @bot.command(name="start")
 async def hello_world(ctx: commands.Context):
-    global word, started
-    resetGrid()
-    word = getWord()
-    # await ctx.send("The word is: " + word)
-    print("The word is: " + word)
+    try:
+        if players[ctx.author.id] in players:
+            del players[ctx.author.id]
 
+    except:
+        pass
+    resetGrid()
     await sendMessage(ctx)
 
+
 @bot.command(name="myemail")
-async def email(ctx, member : discord.Member = None):
+async def email(ctx, member: discord.Member = None):
     await ctx.send("Your profile is: " + str(ctx.author.profile).replace(" ", "\n"))
+
 
 @bot.command(name="reset")
 async def hello(ctx: commands.Context):
