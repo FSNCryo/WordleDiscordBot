@@ -15,41 +15,133 @@ bot.command(intents=intents)
 import random
 
 letters = {
-    0: ":white_square_button:",
-    1: ":regional_indicator_a:",
-    2: ":regional_indicator_b:",
-    3: ":regional_indicator_c:",
-    4: ":regional_indicator_d:",
-    5: ":regional_indicator_e:",
-    6: ":regional_indicator_f:",
-    7: ":regional_indicator_g:",
-    8: ":regional_indicator_h:",
-    9: ":regional_indicator_i:",
-    10: ":regional_indicator_j:",
-    11: ":regional_indicator_k:",
-    12: ":regional_indicator_l:",
-    13: ":regional_indicator_m:",
-    14: ":regional_indicator_n:",
-    15: ":regional_indicator_o:",
-    16: ":regional_indicator_p:",
-    17: ":regional_indicator_q:",
-    18: ":regional_indicator_r:",
-    19: ":regional_indicator_s:",
-    20: ":regional_indicator_t:",
-    21: ":regional_indicator_u:",
-    22: ":regional_indicator_v:",
-    23: ":regional_indicator_w:",
-    24: ":regional_indicator_x:",
-    25: ":regional_indicator_y:",
-    26: ":regional_indicator_z:",
-    27: ":black_large_square:",
-    28: ":green_square:",
-    29: ":yellow_square:",
-    30: ":white_medium_small_square:",
-    31: ":white_medium_small_square:"
+    # Blank space
+    0: "<:Black_Border:961747628792623114>",
+    # Black
+    1: "<:Black_A:961692131649540178>",
+    2: "<:Black_B:961692141527113758>",
+    3: "<:Black_C:961692152373583963>",
+    4: "<:Black_D:961692165958946836>",
+    5: "<:Black_E:961692178747375626>",
+    6: "<:Black_F:961692191200268288>",
+    7: "<:Black_G:961692201795067974>",
+    8: "<:Black_H:961692212326973440>",
+    9: "<:Black_I:961692222288453662>",
+    10: "<:Black_J:961692234238025808>",
+    11: "<:Black_K:961692247680770118>",
+    12: "<:Black_L:961692260867670026>",
+    13: "<:Black_M:961692278206922852>",
+    14: "<:Black_N:961692292157177917>",
+    15: "<:Black_O:961692303955722252>",
+    16: "<:Black_P:961692315884355615>",
+    17: "<:Black_Q:961692327703875684>",
+    18: "<:Black_R:961692340555251743>",
+    19: "<:Black_S:961692353314291732>",
+    20: "<:Black_T:961692368589946950>",
+    21: "<:Black_U:961692378320756778>",
+    22: "<:Black_V:961692387539836958>",
+    23: "<:Black_W:961692406825254992>",
+    24: "<:Black_X:961692417738829845>",
+    25: "<:Black_Y:961692426911752212>",
+    26: "<:Black_Z:961692442632015934>",
+    # Grey
+    27: "<:Grey_A:961682049775861821>",
+    28: "<:Grey_B:961682062719455272>",
+    29: "<:Grey_C:961682074614501416>",
+    30: "<:Grey_D:961682084647272538>",
+    31: "<:Grey_E:961682095145631835>",
+    32: "<:Grey_F:961682106197618758>",
+    33: "<:Grey_G:961682118222692382>",
+    34: "<:Grey_H:961682128238690315>",
+    35: "<:Grey_I:961682139626221618>",
+    36: "<:Grey_J:961682151949090876>",
+    37: "<:Grey_K:961682163491807253>",
+    38: "<:Grey_L:961682174183088148>",
+    39: "<:Grey_M:961682189328736366>",
+    40: "<:Grey_N:961682203618725908>",
+    41: "<:Grey_O:961682216574943292>",
+    42: "<:Grey_P:961682226607698000>",
+    43: "<:Grey_Q:961682240159481916>",
+    44: "<:Grey_R:961682250037088276>",
+    45: "<:Grey_S:961682259969191976>",
+    46: "<:Grey_T:961682271415443546>",
+    47: "<:Grey_U:961682282245132341>",
+    48: "<:Grey_V:961682294031155330>",
+    49: "<:Grey_W:961682304990859304>",
+    50: "<:Grey_X:961682315434663956>",
+    51: "<:Grey_Y:961682368148668426>",
+    52: "<:Grey_Z:961682382203789412>",
+    # Yellow
+    53: "<:Yellow_A:961671667887788063>",
+    54: "<:Yellow_B:961671713366634556>",
+    55: "<:Yellow_C:961671725890830346>",
+    56: "<:Yellow_D:961671764633600000>",
+    57: "<:Yellow_E:961671779338813460>",
+    58: "<:Yellow_F:961671792903204894>",
+    59: "<:Yellow_G:961671805624541184>",
+    60: "<:Yellow_H:961671934293213195>",
+    61: "<:Yellow_I:961671972692058194>",
+    62: "<:Yellow_J:961672009522245682>",
+    63: "<:Yellow_K:961672023673811004>",
+    64: "<:Yellow_L:961672038169317496>",
+    65: "<:Yellow_M:961672048701227052>",
+    66: "<:Yellow_N:961672060218798090>",
+    67: "<:Yellow_O:961672071715356762>",
+    68: "<:Yellow_P:961672083883044964>",
+    69: "<:Yellow_Q:961672101562044426>",
+    70: "<:Yellow_R:961672117508800552>",
+    71: "<:Yellow_S:961672131505193041>",
+    72: "<:Yellow_T:961672148336902154>",
+    73: "<:Yellow_U:961672165734895676>",
+    74: "<:Yellow_V:961672179374784542>",
+    75: "<:Yellow_W:961672195287953518>",
+    76: "<:Yellow_X:961672208269320212>",
+    77: "<:Yellow_Y:961672222907445339>",
+    78: "<:Yellow_Z:961672235884638279>",
+    # Green
+    79: "<:Green_A:961674702517071892>",
+    80: "<:Green_B:961674714290470994>",
+    81: "<:Green_C:961674725602496613>",
+    82: "<:Green_D:961674740500672572>",
+    83: "<:Green_E:961674761975509014>",
+    84: "<:Green_F:961674771559493662>",
+    85: "<:Green_G:961674780971528243>",
+    86: "<:Green_H:961674789162987561>",
+    87: "<:Green_I:961674800315654144>",
+    88: "<:Green_J:961674810918830160>",
+    89: "<:Green_K:961674821572366338>",
+    90: "<:Green_L:961674831508672562>",
+    91: "<:Green_M:961674840576782376>",
+    92: "<:Green_N:961674852874465280>",
+    93: "<:Green_O:961674866011033663>",
+    94: "<:Green_P:961674879248257115>",
+    95: "<:Green_Q:961674890639998997>",
+    96: "<:Green_R:961674902107226233>",
+    97: "<:Green_S:961674913121468456>",
+    98: "<:Green_T:961674924966162443>",
+    99: "<:Green_U:961674935598714910>",
+    100: "<:Green_V:961674944939438151>",
+    101: "<:Green_W:961674960147988510>",
+    102: "<:Green_X:961674973167095818>",
+    103: "<:Green_Y:961674985292845096>",
+    104: "<:Green_Z:961674995879260331>",
+    # Blank Colours
+    # 105: "<:Grey:961682393851387954>",
+    # 106: "<:Green:961681613085868042>",
+    # 107: "<:Yellow:961681400174641242>",
+
 }
 
 alphabet = [
+    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
+    'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+
+    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
+    'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+
+    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
+    'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+
     'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
     'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'
 ]
@@ -60,12 +152,12 @@ lettersDeleted = ""
 lettersLocationIndex = 0
 lettersLocation = {}
 players = {}
-Grid = np.array([[27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27],
-                 [27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27],
-                 [27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27],
-                 [27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27],
-                 [27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27],
-                 [27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27]])
+Grid = np.array([[0, 0, 0, 0, 0],
+                 [0, 0, 0, 0, 0],
+                 [0, 0, 0, 0, 0],
+                 [0, 0, 0, 0, 0],
+                 [0, 0, 0, 0, 0],
+                 [0, 0, 0, 0, 0]])
 
 
 def getWord():
@@ -80,41 +172,40 @@ def getWord():
 
 def resetGrid():
     global Grid
-    Grid = np.array([[27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27],
-                     [27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27],
-                     [27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27],
-                     [27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27],
-                     [27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27],
-                     [27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27]])
+    Grid = np.array([[0, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 0]])
 
 
 def reset(userid):
-    list(players[userid])[0] = np.array([[27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27],
-                                         [27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27],
-                                         [27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27],
-                                         [27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27],
-                                         [27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27],
-                                         [27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27]])
+    list(players[userid])[0] = np.array([[0, 0, 0, 0, 0],
+                                         [0, 0, 0, 0, 0],
+                                         [0, 0, 0, 0, 0],
+                                         [0, 0, 0, 0, 0],
+                                         [0, 0, 0, 0, 0],
+                                         [0, 0, 0, 0, 0]])
     list(players[userid])[1] = 0
 
 
-def resetRow(user, i):
-    userid = user.author.id
-    list(players[userid])[0][i] = [30, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 27, 27, 0, 31]
+def resetRow(userid, i):
+    players[userid][0][i] = [0, 0, 0, 0, 0]
 
 
 def getGameGrid(authid):
-    str = ""
+    string = ""
 
     grid = list(players[authid])[0]
     for row in grid:
         for square in row:
             letter = letters.get(square)
-            str += letter
+            string += letter
 
-        str += "\n"
+        string += "\n"
 
-    return str
+    return string
 
 
 def getNormalEmbededData(title, description):
@@ -136,7 +227,9 @@ def getLoseEmbededData(title, description):
 
 
 async def sendMessage(message):
-    players[message.author.id] = Grid, 0, 0, True, getWord()
+    word = getWord()
+    print(word)
+    players[message.author.id] = Grid, 0, 0, True, word
     avatar_url = message.author.avatar_url
     authid = message.author.id
     embedVar = getNormalEmbededData(title="Wordle",
@@ -146,7 +239,8 @@ async def sendMessage(message):
     embedVar.set_footer(text="{}".format(message.author.name), icon_url=avatar_url)
     msg = await message.channel.send(embed=embedVar)
 
-    players[message.author.id] = players[message.author.id][0], 0, msg.id, players[message.author.id][3], players[message.author.id][4]
+    players[message.author.id] = players[message.author.id][0], 0, msg.id, players[message.author.id][3], \
+                                 players[message.author.id][4]
 
     reset(message.author.id)
 
@@ -159,7 +253,7 @@ async def win(channelid, user):
                        value="\u200b",
                        inline=True)
 
-    embedVar.add_field(name="Completed in : "+str(list(players[user.id])[1] + 1), value="\u200b", inline=False)
+    embedVar.add_field(name="Completed in : " + str(list(players[user.id])[1] + 1), value="\u200b", inline=False)
 
     message = await bot.get_channel(channelid).fetch_message(players[user.id][2])
 
@@ -192,6 +286,7 @@ async def lose(channelid, user):
 
     players[user.id] = Grid, 0, None, False
     del players[user.id]
+
 
 async def updateMessage(channel_id, user_id, user_name, user_avatar):
     if list(players[user_id])[3]:
@@ -262,6 +357,8 @@ async def on_reaction_add(reaction, user):
 
     if emoji == "🔄":
         messages = [message for message in await channel.history(limit=50).flatten() if message.author.id == user.id]
+        resetRow(user.id, index)
+
 
         guess = ""
         lettersList = list(lettersLocation)
@@ -269,18 +366,15 @@ async def on_reaction_add(reaction, user):
 
         for message in messages:
             for i in range(loopNum):
-                print(lettersList[0])
                 letterNum = lettersLocation[lettersList[0]]
+                # fix
                 letter = alphabet[letterNum[1] - 1]
                 guess += letter
-                print("message content: " + message.content)
-                print("guess: " + guess)
-                print("lettersList: " + str(lettersList))
-                print("\n")
                 if message.content == guess:
                     await message.delete()
-                    message.delete()
+                    print("deleted")
                     if len(guess) == len(word):
+
                         return
 
                     guess = ""
@@ -288,17 +382,12 @@ async def on_reaction_add(reaction, user):
 
                 lettersList.pop(0)
 
-        resetRow(user, index)
-
     if emoji == "➡":
         if len(players[user.id][0]) < index + 1:
             return
 
         if 0 in players[user.id][0][index]:
             return
-
-        players[user.id][0][index, 0] = 27
-        players[user.id][0][index, -1] = 27
 
         wordArr = []
         for L in word:
@@ -308,30 +397,28 @@ async def on_reaction_add(reaction, user):
         for i in wordArr:
             letterIndexArr.append(alphabet.index(i) + 1)
 
-        temp = np.where(np.logical_and(list(players[user.id])[0][index] >= 1, list(players[user.id])[0][index] <= 26))
-        squares = temp[0]
         for i in range(5):
-            squareIndex = squares[i]
-
             letterIndex = letterIndexArr[i]
-            squareGrid = players[user.id][0][index, squareIndex]
+            squareGrid = players[user.id][0][index, i]
 
             if squareGrid == letterIndex:
-                players[user.id][0][index, squareIndex - 1] = 28
-                players[user.id][0][index, squareIndex + 1] = 28
-                wordArr[wordArr.index(alphabet[letterIndex - 1])] = "*"
+                players[user.id][0][index, i] += 78  # Green
+
+                wordArr[i] = "*"
 
         for i in range(5):
-            squareIndex = squares[i]
+            letter = alphabet[players[user.id][0][index, i] - 1]
 
-            squareGrid = list(players[user.id])[0][index, squareIndex]
-            letter = alphabet[squareGrid - 1]
+            print("letter " + str(letter))
+            if letter == "*":
+                continue
 
             if letter in wordArr:
-                players[user.id][0][index, squareIndex - 1] = 29
-                players[user.id][0][index, squareIndex + 1] = 29
+                players[user.id][0][index, i] += 52  # Yellow
 
-            # NOTE: get the square value add one and get the letter from alphabet index
+        for i in range(5):
+            if players[user.id][0][index, i] <= 26:
+                players[user.id][0][index, i] += 26  # Grey
 
         guessedWord = ""
         lettersList = list(lettersLocation)
@@ -347,10 +434,9 @@ async def on_reaction_add(reaction, user):
             return
 
         index += 1
-        players[user.id] = (players[user.id][0], players[user.id][1] + 1, players[user.id][2], players[user.id][3], players[user.id][4])
+        players[user.id] = (
+        players[user.id][0], players[user.id][1] + 1, players[user.id][2], players[user.id][3], players[user.id][4])
 
-        players[user.id][0][index, 0] = 30
-        players[user.id][0][index, -1] = 31
     # if guess != word and index = len(Grid) - 1: then end game.
     # await msg.remove_reaction(reaction, user)
 
@@ -423,10 +509,6 @@ async def on_message(message):
                         squares = np.delete(squares, 0)
                         continue
 
-    if index == 0:
-        grid[index, 0] = 30
-        grid[index, -1] = 31
-
     await updateMessage(message.channel.id, message.author.id, message.author.display_name, message.author.avatar_url)
 
 
@@ -442,8 +524,8 @@ async def hello_world(ctx: commands.Context):
     await sendMessage(ctx)
 
 
-@bot.command(name="myemail")
-async def email(ctx, member: discord.Member = None):
+@bot.command(name="profile")
+async def email(ctx: commands.Context):
     await ctx.send("Your profile is: " + str(ctx.author.profile).replace(" ", "\n"))
 
 
