@@ -191,7 +191,7 @@ def reset(userid):
 
 
 def resetRow(userid, i):
-    players[userid][0][i] = [0, 0, 0, 0, 0]
+    list(players[userid])[0][i] = [0, 0, 0, 0, 0]
 
 
 def getGameGrid(authid):
@@ -366,21 +366,19 @@ async def on_reaction_add(reaction, user):
 
         for message in messages:
             for i in range(loopNum):
-                letterNum = lettersLocation[lettersList[0]]
-                # fix
+                letterNum = lettersLocation[lettersList[i]]
                 letter = alphabet[letterNum[1] - 1]
+                
                 guess += letter
                 if message.content == guess:
                     await message.delete()
                     print("deleted")
                     if len(guess) == len(word):
-
-                        return
+                        break
 
                     guess = ""
                     lettersList = list(lettersLocation)
 
-                lettersList.pop(0)
 
     if emoji == "➡":
         if len(players[user.id][0]) < index + 1:
@@ -409,7 +407,6 @@ async def on_reaction_add(reaction, user):
         for i in range(5):
             letter = alphabet[players[user.id][0][index, i] - 1]
 
-            print("letter " + str(letter))
             if letter == "*":
                 continue
 
@@ -533,7 +530,6 @@ async def email(ctx: commands.Context):
 async def hello(ctx: commands.Context):
     reset(ctx.author.id)
     await updateMessage(ctx.channel.id, ctx.author.id, ctx.author.display_name, ctx.author.avatar_url)
-
 
 with open("TOKEN.txt", "r") as f:
     TOKEN = f.readline()
