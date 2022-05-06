@@ -228,7 +228,7 @@ def getLoseEmbededData(title, description):
 
 async def sendMessage(message):
     word = getWord()
-    print(word)
+    print(message.author.name+"'s word is: "+word)
     players[message.author.id] = Grid, 0, 0, True, word
     avatar_url = message.author.avatar_url
     authid = message.author.id
