@@ -1,10 +1,9 @@
-import string
+import json
 
 import discord
-from discord import reaction
-from discord.ext import commands
 import numpy as np
-import json
+
+from discord.ext import commands
 
 bot = commands.Bot(command_prefix='!')
 intents = discord.Intents.default()
@@ -228,7 +227,7 @@ def getLoseEmbededData(title, description):
 
 async def sendMessage(message):
     word = getWord()
-    print(message.author.name+"'s word is: "+word)
+    print(message.author.name + "'s word is: " + word)
     players[message.author.id] = Grid, 0, 0, True, word
     avatar_url = message.author.avatar_url
     authid = message.author.id
@@ -245,17 +244,17 @@ async def sendMessage(message):
     reset(message.author.id)
 
 
-async def win(channelid, user):
+async def win(channelid, userId):
     embedVar = getWinEmbededData(title="Wordle",
-                                 description="{}".format(getGameGrid(user.id)))
+                                 description="{}".format(getGameGrid(userId)))
     embedVar.add_field(name="YOU WIN!", value="\u200b", inline=True)
-    embedVar.add_field(name="The Word Was: ||" + players[user.id][4] + "||",
+    embedVar.add_field(name="The Word Was: ||" + players[userId][4] + "||",
                        value="\u200b",
                        inline=True)
 
-    embedVar.add_field(name="Completed in : " + str(list(players[user.id])[1] + 1), value="\u200b", inline=False)
+    embedVar.add_field(name="Completed in : " + str(list(players[userId])[1] + 1), value="\u200b", inline=False)
 
-    message = await bot.get_channel(channelid).fetch_message(players[user.id][2])
+    message = await bot.get_channel(channelid).fetch_message(players[userId][2])
 
     await message.edit(embed=embedVar)
 
@@ -263,20 +262,20 @@ async def win(channelid, user):
     await message.remove_reaction('🔄', bot.user)
     await message.remove_reaction('➡', bot.user)
 
-    players[user.id] = Grid, 0, None, False
-    del players[user.id]
+    players[userId] = Grid, 0, None, False
+    del players[userId]
 
 
-async def lose(channelid, user):
+async def lose(channelid, userId):
     embedVar = getLoseEmbededData(title="Wordle",
-                                  description="{}".format(getGameGrid(user.id)))
+                                  description="{}".format(getGameGrid(userId)))
     embedVar.add_field(name="YOU LOSE!", value="\u200b", inline=True)
 
-    embedVar.add_field(name="The Word Was: ||" + players[user.id][4] + "||",
+    embedVar.add_field(name="The Word Was: ||" + players[userId][4] + "||",
                        value="\u200b",
                        inline=True)
 
-    message = await bot.get_channel(channelid).fetch_message(players[user.id][2])
+    message = await bot.get_channel(channelid).fetch_message(players[userId][2])
 
     await message.edit(embed=embedVar)
 
@@ -284,19 +283,14 @@ async def lose(channelid, user):
     await message.remove_reaction('🔄', bot.user)
     await message.remove_reaction('➡', bot.user)
 
-    players[user.id] = Grid, 0, None, False
-    del players[user.id]
+    players[userId] = Grid, 0, None, False
+    del players[userId]
 
 
 async def updateMessage(channel_id, user_id, user_name, user_avatar):
     if list(players[user_id])[3]:
         embedVar = getNormalEmbededData(title="Wordle",
                                         description="{}".format(getGameGrid(user_id)))
-        embedVar.add_field(name="```Backspace = ◀\n"
-                                "Clear : 🔄\n"
-                                "Enter : ➡```",
-                           value="\u200b",
-                           inline=False)
 
         embedVar.add_field(name="Line: " + str(list(players[user_id])[1] + 1),
                            value="\u200b",
@@ -349,7 +343,6 @@ async def on_reaction_add(reaction, user):
         letterChar = alphabet[letterNum - 1]
         lettersDeleted = letterChar + lettersDeleted
         for message in messages:
-            print(message.content)
             if message.content == lettersDeleted:
                 await message.delete()
                 lettersDeleted = ""
@@ -359,7 +352,6 @@ async def on_reaction_add(reaction, user):
         messages = [message for message in await channel.history(limit=50).flatten() if message.author.id == user.id]
         resetRow(user.id, index)
 
-
         guess = ""
         lettersList = list(lettersLocation)
         loopNum = len(lettersList)
@@ -368,7 +360,6 @@ async def on_reaction_add(reaction, user):
             for i in range(loopNum):
                 letterNum = lettersLocation[lettersList[i]]
                 letter = alphabet[letterNum[1] - 1]
-                
                 guess += letter
                 if message.content == guess:
                     await message.delete()
@@ -379,67 +370,77 @@ async def on_reaction_add(reaction, user):
                     guess = ""
                     lettersList = list(lettersLocation)
 
-
     if emoji == "➡":
-        if len(players[user.id][0]) < index + 1:
-            return
-
-        if 0 in players[user.id][0][index]:
-            return
-
-        wordArr = []
-        for L in word:
-            wordArr.append(L)
-        letterIndexArr = []
-
-        for i in wordArr:
-            letterIndexArr.append(alphabet.index(i) + 1)
-
-        for i in range(5):
-            letterIndex = letterIndexArr[i]
-            squareGrid = players[user.id][0][index, i]
-
-            if squareGrid == letterIndex:
-                players[user.id][0][index, i] += 78  # Green
-
-                wordArr[i] = "*"
-
-        for i in range(5):
-            letter = alphabet[players[user.id][0][index, i] - 1]
-
-            if letter == "*":
-                continue
-
-            if letter in wordArr:
-                players[user.id][0][index, i] += 52  # Yellow
-
-        for i in range(5):
-            if players[user.id][0][index, i] <= 26:
-                players[user.id][0][index, i] += 26  # Grey
-
-        guessedWord = ""
-        lettersList = list(lettersLocation)
-
-        for L in lettersList:
-            guessedWord += alphabet[lettersLocation[L][1] - 1]
-
-        if guessedWord == word:
-            await win(channel.id, user)
-            return
-        elif index >= 5:
-            await lose(channel.id, user)
-            return
-
-        index += 1
-        players[user.id] = (
-        players[user.id][0], players[user.id][1] + 1, players[user.id][2], players[user.id][3], players[user.id][4])
-
-    # if guess != word and index = len(Grid) - 1: then end game.
-    # await msg.remove_reaction(reaction, user)
+        await nextLine(user.id, channel.id)
 
     await updateMessage(channel.id, user.id, user.display_name, user.avatar_url)
     return
 
+
+async def nextLine(userId, channelId):
+    word = players[userId][4]
+    index = players[userId][1]
+
+    if len(players[userId][0]) < index + 1:
+        return
+
+    if 0 in players[userId][0][index]:
+        return
+
+    wordArr = []
+    for L in word:
+        wordArr.append(L)
+    letterIndexArr = []
+
+    for i in wordArr:
+        letterIndexArr.append(alphabet.index(i) + 1)
+
+    for i in range(5):
+        letterIndex = letterIndexArr[i]
+        squareGrid = players[userId][0][index, i]
+
+        if squareGrid == letterIndex:
+            players[userId][0][index, i] += 78  # Green
+
+            wordArr[i] = "*"
+
+    for i in range(5):
+        letter = alphabet[players[userId][0][index, i] - 1]
+
+        if letter == "*":
+            continue
+
+        if letter in wordArr:
+            players[userId][0][index, i] += 52  # Yellow
+
+            for L in wordArr:
+                if L == letter:
+                    wordArr[wordArr.index(L)] = "*"
+
+    for i in range(5):
+        if players[userId][0][index, i] <= 26:
+            players[userId][0][index, i] += 26  # Grey
+
+    guessedWord = ""
+    lettersList = list(lettersLocation)
+
+    for L in lettersList:
+        guessedWord += alphabet[lettersLocation[L][1] - 1]
+
+    if guessedWord == word:
+        await win(channelId, userId)
+        return
+    elif index >= 5:
+        await lose(channelId, userId)
+        return
+
+    index += 1
+    players[userId] = (
+        players[userId][0], players[userId][1] + 1, players[userId][2], players[userId][3], players[userId][4])
+
+
+# if guess != word and index = len(Grid) - 1: then end game.
+# await msg.remove_reaction(reaction, user)
 
 @bot.event
 async def on_ready():
@@ -506,11 +507,14 @@ async def on_message(message):
                         squares = np.delete(squares, 0)
                         continue
 
+    if message.content[-1] == ".":
+        await nextLine(message.author.id, message.channel.id)
+
     await updateMessage(message.channel.id, message.author.id, message.author.display_name, message.author.avatar_url)
 
 
 @bot.command(name="start")
-async def hello_world(ctx: commands.Context):
+async def StartGame(ctx: commands.Context):
     try:
         if players[ctx.author.id] in players:
             del players[ctx.author.id]
@@ -522,14 +526,23 @@ async def hello_world(ctx: commands.Context):
 
 
 @bot.command(name="profile")
-async def email(ctx: commands.Context):
-    await ctx.send("Your profile is: " + str(ctx.author.profile).replace(" ", "\n"))
+async def Profile(ctx: commands.Context):
+    components = [
+        {
+            "type": 2,
+            "label": "Test Button",
+            "style": 1,
+            "custom_id": "clear_kick_button"
+        }
+    ]
+    await ctx.send("Your profile is: " + str(ctx.author.profile).replace(" ", "\n"), )
 
 
 @bot.command(name="reset")
 async def hello(ctx: commands.Context):
     reset(ctx.author.id)
     await updateMessage(ctx.channel.id, ctx.author.id, ctx.author.display_name, ctx.author.avatar_url)
+
 
 with open("TOKEN.txt", "r") as f:
     TOKEN = f.readline()
