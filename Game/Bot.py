@@ -235,7 +235,7 @@ async def sendMessage(message):
                                     description="{}".format(getGameGrid(authid)))
     embedVar.add_field(name="To Start enter a Word or Letter", value="\u200b")
 
-    embedVar.set_footer(text="{}".format(message.author.name), icon_url=avatar_url)
+    embedVar.set_footer(text="{}".format(message.author.name+"#"+message.author.discriminator), icon_url=avatar_url)
     msg = await message.channel.send(embed=embedVar)
 
     players[message.author.id] = players[message.author.id][0], 0, msg.id, players[message.author.id][3], \
@@ -288,6 +288,9 @@ async def lose(channelid, userId):
 
 
 async def updateMessage(channel_id, user_id, user_name, user_avatar):
+    if user_id not in players:
+        return
+
     if list(players[user_id])[3]:
         embedVar = getNormalEmbededData(title="Wordle",
                                         description="{}".format(getGameGrid(user_id)))
@@ -300,10 +303,11 @@ async def updateMessage(channel_id, user_id, user_name, user_avatar):
 
         message = await bot.get_channel(channel_id).fetch_message(players[user_id][2])
         await message.edit(embed=embedVar)
-
-        await message.add_reaction('◀')
-        await message.add_reaction('🔄')
-        await message.add_reaction('➡')
+        # check if channel is not a dm
+        if message.channel.type != discord.ChannelType.private:
+            await message.add_reaction('◀')
+            await message.add_reaction('🔄')
+            await message.add_reaction('➡')
 
 
 @bot.event
@@ -326,54 +330,15 @@ async def on_reaction_add(reaction, user):
     await reaction.remove(user)
 
     if emoji == "◀":
-        tempList = list(lettersLocation)
-        letter = lettersLocation[tempList[-1]]
-        letterIndex = letter[0]
-        letterNum = letter[1]
-
-        lettersLocation.popitem()
-        temp = np.where(list(players[user.id])[0][letterIndex] == letterNum)
-        squares = temp[0]
-        nextSquare = squares[-1]
-        list(players[user.id])[0][index, nextSquare] = 0
-
-        messages = [message for message in await channel.history(limit=50).flatten() if message.author.id == user.id]
-        messages = messages[:10]  # only look at the first 10 messages
-        # check if the letter deleted is in messages, if so delete it
-        letterChar = alphabet[letterNum - 1]
-        lettersDeleted = letterChar + lettersDeleted
-        for message in messages:
-            if message.content == lettersDeleted:
-                await message.delete()
-                lettersDeleted = ""
-                break
+        await backspace(user.id, channel)
 
     if emoji == "🔄":
-        messages = [message for message in await channel.history(limit=50).flatten() if message.author.id == user.id]
-        resetRow(user.id, index)
-
-        guess = ""
-        lettersList = list(lettersLocation)
-        loopNum = len(lettersList)
-
-        for message in messages:
-            for i in range(loopNum):
-                letterNum = lettersLocation[lettersList[i]]
-                letter = alphabet[letterNum[1] - 1]
-                guess += letter
-                if message.content == guess:
-                    await message.delete()
-                    print("deleted")
-                    if len(guess) == len(word):
-                        break
-
-                    guess = ""
-                    lettersList = list(lettersLocation)
+        await clear(user.id, channel)
 
     if emoji == "➡":
         await nextLine(user.id, channel.id)
 
-    await updateMessage(channel.id, user.id, user.display_name, user.avatar_url)
+    await updateMessage(channel.id, user.id, user.display_name+"#"+user.discriminator, user.avatar_url)
     return
 
 
@@ -439,8 +404,60 @@ async def nextLine(userId, channelId):
         players[userId][0], players[userId][1] + 1, players[userId][2], players[userId][3], players[userId][4])
 
 
-# if guess != word and index = len(Grid) - 1: then end game.
-# await msg.remove_reaction(reaction, user)
+async def backspace(userId, channel):
+    global lettersLocationIndex, lettersDeleted, lettersLocation
+
+    index = players[userId][1]
+
+    tempList = list(lettersLocation)
+    letter = lettersLocation[tempList[-1]]
+    letterIndex = letter[0]
+    letterNum = letter[1]
+
+    lettersLocation.popitem()
+    temp = np.where(list(players[userId])[0][letterIndex] == letterNum)
+    squares = temp[0]
+    nextSquare = squares[-1]
+    list(players[userId])[0][index, nextSquare] = 0
+
+    messages = [message for message in await channel.history(limit=50).flatten() if message.author.id == userId]
+    messages = messages[:10]  # only look at the first 10 messages
+    # check if the letter deleted is in messages, if so delete it
+    letterChar = alphabet[letterNum - 1]
+    lettersDeleted = letterChar + lettersDeleted
+    for message in messages:
+        if message.content == lettersDeleted:
+            await message.delete()
+            lettersDeleted = ""
+            break
+
+
+async def clear(userId, channel):
+    word = players[userId][4]
+    index = players[userId][1]
+
+    global lettersLocationIndex, lettersDeleted, lettersLocation
+    messages = [message for message in await channel.history(limit=50).flatten() if message.author.id == userId]
+    resetRow(userId, index)
+
+    guess = ""
+    lettersList = list(lettersLocation)
+    loopNum = len(lettersList)
+
+    for message in messages:
+        for i in range(loopNum):
+            letterNum = lettersLocation[lettersList[i]]
+            letter = alphabet[letterNum[1] - 1]
+            guess += letter
+            if message.content == guess:
+                await message.delete()
+                print("deleted")
+                if len(guess) == len(word):
+                    break
+
+                guess = ""
+                lettersList = list(lettersLocation)
+
 
 @bot.event
 async def on_ready():
@@ -449,8 +466,7 @@ async def on_ready():
     await bot.change_presence(activity=discord.Game(name="Wordle"))
     print('We have logged in as {0.user}'.format(bot))
     print("TODO: in on message check if it is the user who started the game")
-    print(
-        "TODO: display username and pfp of the user that started each game making it easier to differentiate between games")
+    print("TODO: display username and pfp of the user that started each game making it easier to differentiate between games")
     print("TODO: game doesn't work in DM (onReactionAdd not running in DM) (check intents)")
     print("TODO: put the wordle game in a separate file, this will allow for multiple games to be played at once")
     print("TODO: check if the word entered is a word in words json")
@@ -458,7 +474,7 @@ async def on_ready():
     print("TODO: add daily Wordles")
     print("TODO: delete users guess when on reaction add is reset and when guess is split into multiple messages")
     print("TODO: add dropdown menu because why not... (https://gist.github.com/lykn/a2b68cb790d6dad8ecff75b2aa450f23)")
-
+    print("TODO: ability to create and send wordles to friends DMs")
 
 @bot.event
 async def on_message(message):
@@ -510,7 +526,13 @@ async def on_message(message):
     if message.content[-1] == ".":
         await nextLine(message.author.id, message.channel.id)
 
-    await updateMessage(message.channel.id, message.author.id, message.author.display_name, message.author.avatar_url)
+    if "-" in message.content:
+        await backspace(message.author.id, message.channel)
+
+    if "/" in message.content:
+        await clear(message.author.id, message.channel)
+
+    await updateMessage(message.channel.id, message.author.id, message.author.display_name+"#"+message.author.discriminator, message.author.avatar_url)
 
 
 @bot.command(name="start")
@@ -541,7 +563,7 @@ async def Profile(ctx: commands.Context):
 @bot.command(name="reset")
 async def hello(ctx: commands.Context):
     reset(ctx.author.id)
-    await updateMessage(ctx.channel.id, ctx.author.id, ctx.author.display_name, ctx.author.avatar_url)
+    await updateMessage(ctx.channel.id, ctx.author.id, ctx.author.display_name+"#"+ctx.author.discriminator, ctx.author.avatar_url)
 
 
 with open("TOKEN.txt", "r") as f:
