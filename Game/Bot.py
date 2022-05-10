@@ -235,7 +235,7 @@ async def sendMessage(message):
                                     description="{}".format(getGameGrid(authid)))
     embedVar.add_field(name="To Start enter a Word or Letter", value="\u200b")
 
-    embedVar.set_footer(text="{}".format(message.author.name+"#"+message.author.discriminator), icon_url=avatar_url)
+    embedVar.set_footer(text="{}".format(message.author.name + "#" + message.author.discriminator), icon_url=avatar_url)
     msg = await message.channel.send(embed=embedVar)
 
     players[message.author.id] = players[message.author.id][0], 0, msg.id, players[message.author.id][3], \
@@ -338,7 +338,7 @@ async def on_reaction_add(reaction, user):
     if emoji == "➡":
         await nextLine(user.id, channel.id)
 
-    await updateMessage(channel.id, user.id, user.display_name+"#"+user.discriminator, user.avatar_url)
+    await updateMessage(channel.id, user.id, user.display_name + "#" + user.discriminator, user.avatar_url)
     return
 
 
@@ -351,6 +351,22 @@ async def nextLine(userId, channelId):
 
     if 0 in players[userId][0][index]:
         return
+
+    guessedWord = ""
+    lettersList = list(lettersLocation)
+
+    for L in lettersList:
+        guessedWord += alphabet[lettersLocation[L][1] - 1]
+
+    with open("commonWords.json", "r") as words_file:
+        data = json.loads(words_file.read())
+
+        words = data[0]["5"].keys()
+        if guessedWord not in words:
+            channel = bot.get_channel(channelId)
+            await channel.send(f"<@{userId}> Sorry I don't know the word **{guessedWord}.** Use the command **!words** to see the list of available words.")
+            await clear(userId, channel)
+            return
 
     wordArr = []
     for L in word:
@@ -385,12 +401,6 @@ async def nextLine(userId, channelId):
     for i in range(5):
         if players[userId][0][index, i] <= 26:
             players[userId][0][index, i] += 26  # Grey
-
-    guessedWord = ""
-    lettersList = list(lettersLocation)
-
-    for L in lettersList:
-        guessedWord += alphabet[lettersLocation[L][1] - 1]
 
     if guessedWord == word:
         await win(channelId, userId)
@@ -466,7 +476,8 @@ async def on_ready():
     await bot.change_presence(activity=discord.Game(name="Wordle"))
     print('We have logged in as {0.user}'.format(bot))
     print("TODO: in on message check if it is the user who started the game")
-    print("TODO: display username and pfp of the user that started each game making it easier to differentiate between games")
+    print(
+        "TODO: display username and pfp of the user that started each game making it easier to differentiate between games")
     print("TODO: game doesn't work in DM (onReactionAdd not running in DM) (check intents)")
     print("TODO: put the wordle game in a separate file, this will allow for multiple games to be played at once")
     print("TODO: check if the word entered is a word in words json")
@@ -475,6 +486,7 @@ async def on_ready():
     print("TODO: delete users guess when on reaction add is reset and when guess is split into multiple messages")
     print("TODO: add dropdown menu because why not... (https://gist.github.com/lykn/a2b68cb790d6dad8ecff75b2aa450f23)")
     print("TODO: ability to create and send wordles to friends DMs")
+
 
 @bot.event
 async def on_message(message):
@@ -532,7 +544,8 @@ async def on_message(message):
     if "/" in message.content:
         await clear(message.author.id, message.channel)
 
-    await updateMessage(message.channel.id, message.author.id, message.author.display_name+"#"+message.author.discriminator, message.author.avatar_url)
+    await updateMessage(message.channel.id, message.author.id,
+                        message.author.display_name + "#" + message.author.discriminator, message.author.avatar_url)
 
 
 @bot.command(name="start")
@@ -547,23 +560,26 @@ async def StartGame(ctx: commands.Context):
     await sendMessage(ctx)
 
 
-@bot.command(name="profile")
+@bot.command(aliases=["words", "wordlist", "list"])
 async def Profile(ctx: commands.Context):
-    components = [
-        {
-            "type": 2,
-            "label": "Test Button",
-            "style": 1,
-            "custom_id": "clear_kick_button"
-        }
-    ]
-    await ctx.send("Your profile is: " + str(ctx.author.profile).replace(" ", "\n"), )
+    with open("commonWords.json", "r") as words_file:
+        data = json.loads(words_file.read())
+
+        wordsDict = data[0]["5"].keys()
+
+        words = "```"
+        for word in wordsDict:
+            words += word + ", "
+        words += "```"
+
+    await ctx.send(words)
 
 
 @bot.command(name="reset")
 async def hello(ctx: commands.Context):
     reset(ctx.author.id)
-    await updateMessage(ctx.channel.id, ctx.author.id, ctx.author.display_name+"#"+ctx.author.discriminator, ctx.author.avatar_url)
+    await updateMessage(ctx.channel.id, ctx.author.id, ctx.author.display_name + "#" + ctx.author.discriminator,
+                        ctx.author.avatar_url)
 
 
 with open("TOKEN.txt", "r") as f:
