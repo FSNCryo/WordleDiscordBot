@@ -1,4 +1,5 @@
 import json
+import re
 
 import discord
 import numpy as np
@@ -147,10 +148,12 @@ alphabet = [
 global lettersLocationIndex
 global lettersDeleted
 global players
+global customPlayers
 lettersDeleted = ""
 lettersLocationIndex = 0
 lettersLocation = {}
 players = {}
+customPlayers = {}
 Grid = np.array([[0, 0, 0, 0, 0],
                  [0, 0, 0, 0, 0],
                  [0, 0, 0, 0, 0],
@@ -200,7 +203,51 @@ def getGameGrid(authid):
     for row in grid:
         for square in row:
             letter = letters.get(square)
-            string += letter
+            try:
+                string += letter
+            except TypeError:
+                print("Error concatenating the letter: " + str(letter))
+
+        string += "\n"
+
+    return string
+
+
+def customResetGrid():
+    global Grid
+    Grid = np.array([[0, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 0]])
+
+
+def customReset(userid):
+    list(players[userid])[0] = np.array([[0, 0, 0, 0, 0],
+                                         [0, 0, 0, 0, 0],
+                                         [0, 0, 0, 0, 0],
+                                         [0, 0, 0, 0, 0],
+                                         [0, 0, 0, 0, 0],
+                                         [0, 0, 0, 0, 0]])
+    list(players[userid])[1] = 0
+
+
+def customResetRow(userid, i):
+    list(players[userid])[0][i] = [0, 0, 0, 0, 0]
+
+
+def customGetGameGrid(authid):
+    string = ""
+
+    grid = list(players[authid])[0]
+    for row in grid:
+        for square in row:
+            letter = letters.get(square)
+            try:
+                string += letter
+            except TypeError:
+                print("Error concatenating the letter: " + str(letter))
 
         string += "\n"
 
@@ -242,6 +289,70 @@ async def sendMessage(message):
                                  players[message.author.id][4]
 
     reset(message.author.id)
+
+
+async def customSendMessage(message, user, word):
+    print(message.author.name + "'s word is: " + word)
+    customPlayers[message.author.id] = Grid, 0, 0, True, word
+    avatar_url = message.author.avatar_url
+    authid = message.author.id
+    embedVar = getNormalEmbededData(title="Wordle",
+                                    description="{}".format(getGameGrid(authid)))
+    embedVar.add_field(name="To Start enter a Word or Letter", value="\u200b")
+
+    embedVar.add_field(name=f"{user} Has Sent You a Wordle!", value="\u200b")
+
+    embedVar.set_footer(text="{}".format(message.author.name + "#" + message.author.discriminator), icon_url=avatar_url)
+    msg = await message.channel.send(embed=embedVar)
+    # send the message to the user who sent the message as well
+    # do this to update message as well
+    customPlayers[message.author.id] = customPlayers[message.author.id][0], 0, msg.id, customPlayers[message.author.id][
+        3], customPlayers[message.author.id][4]
+
+    reset(message.author.id)  # customReset?
+
+
+async def customWin(channelid, userId):
+    embedVar = getWinEmbededData(title="Wordle",
+                                 description="{}".format(getGameGrid(userId)))
+    embedVar.add_field(name="YOU WIN!", value="\u200b", inline=True)
+    embedVar.add_field(name="The Word Was: ||" + players[userId][4] + "||",
+                       value="\u200b",
+                       inline=True)
+
+    embedVar.add_field(name="Completed in : " + str(list(players[userId])[1] + 1), value="\u200b", inline=False)
+
+    message = await bot.get_channel(channelid).fetch_message(players[userId][2])
+
+    await message.edit(embed=embedVar)
+
+    await message.remove_reaction('◀', bot.user)
+    await message.remove_reaction('🔄', bot.user)
+    await message.remove_reaction('➡', bot.user)
+
+    customPlayers[userId] = Grid, 0, None, False
+    del players[userId]
+
+
+async def customLose(channelid, userId):
+    embedVar = getLoseEmbededData(title="Wordle",
+                                  description="{}".format(getGameGrid(userId)))
+    embedVar.add_field(name="YOU LOSE!", value="\u200b", inline=True)
+
+    embedVar.add_field(name="The Word Was: ||" + players[userId][4] + "||",
+                       value="\u200b",
+                       inline=True)
+
+    message = await bot.get_channel(channelid).fetch_message(players[userId][2])
+
+    await message.edit(embed=embedVar)
+
+    await message.remove_reaction('◀', bot.user)
+    await message.remove_reaction('🔄', bot.user)
+    await message.remove_reaction('➡', bot.user)
+
+    customPlayers[userId] = Grid, 0, None, False
+    del players[userId]
 
 
 async def win(channelid, userId):
@@ -309,6 +420,10 @@ async def updateMessage(channel_id, user_id, user_name, user_avatar):
             await message.add_reaction('🔄')
             await message.add_reaction('➡')
 
+        if message.channel.type == discord.ChannelType.private:
+            embedVar.add_field(name="**Clear line:** /", value="\u200b")
+            embedVar.add_field(name="**Backspace:** -", value="\u200b")
+            embedVar.add_field(name="**Enter Word:** .", value="\u200b")
 
 @bot.event
 async def on_reaction_add(reaction, user):
@@ -364,7 +479,10 @@ async def nextLine(userId, channelId):
         words = data[0]["5"].keys()
         if guessedWord not in words:
             channel = bot.get_channel(channelId)
-            await channel.send(f"<@{userId}> Sorry I don't know the word **{guessedWord}.** Use the command **!words** to see the list of available words.")
+
+            guessedWord = re.sub(r'[^a-zA-Z]', '', guessedWord)
+            await channel.send(
+                f"<@{userId}> The word ` {guessedWord} ` is not in the list of common words. Please try again.")
             await clear(userId, channel)
             return
 
